@@ -21,12 +21,12 @@ class _AppRouterWidgetState extends State<AppRouterWidget> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Rugramm',
+      title: 'GrammyRu',
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        primarySwatch: Colors.blue,
+        primaryColor: Colors.blue.shade300,
       ),
     );
   }
