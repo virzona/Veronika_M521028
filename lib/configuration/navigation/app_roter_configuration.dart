@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:test_environtment/features/home/home_page.dart';
 import 'package:test_environtment/features/navigation/main_screen.dart';
 
+import '../../features/profile/profile_page.dart';
 import 'app_routes.dart';
 
 class AppRouterConfiguration {
@@ -37,7 +38,7 @@ class AppRouterConfiguration {
             GoRoute(
               name: AppRoutes.profile.name,
               path: AppRoutes.profile.path,
-              builder: (context, state) => const Center(child: Text('profile')),
+              builder: (context, state) => ProfileScreen(),
             ),
           ],
         ),

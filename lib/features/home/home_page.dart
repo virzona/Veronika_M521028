@@ -5,7 +5,7 @@ import 'bloc/posts_cubit.dart';
 import 'widgets/post_preview_card.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+   const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -34,6 +34,44 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        centerTitle: false,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        title: const SizedBox(
+          height: 36,
+          width: 120,
+          child: Text('GrammyRu', style: TextStyle(fontFamily: 'DancingScript', fontSize: 30),),
+        ),
+        actions: [
+          Row(
+            children: const [
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(
+                  Icons.add_box_outlined,
+                  size: 30,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(
+                  Icons.favorite_outline_rounded,
+                  size: 30,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(
+                  Icons.energy_savings_leaf_outlined,
+                  size: 30,
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
       body: BlocBuilder<PostsCubit, PostsState>(
         bloc: postsCubit,
         builder: (context, state) {
@@ -42,14 +80,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 controller: scrollController,
                 itemCount: state.postsInfo.data.length,
                 prototypeItem: Padding(
-                  padding: const EdgeInsets.only(top: 24),
+                  padding: const EdgeInsets.only(top: 20),
                   child: PostPreviewCard(
                     postPreview: state.postsInfo.data.first,
                   ),
                 ),
                 itemBuilder: (context, index) {
                   return Padding(
-                    padding: const EdgeInsets.only(top: 24),
+                    padding: const EdgeInsets.only(top: 0),
                     child: PostPreviewCard(
                       postPreview: state.postsInfo.data[index],
                     ),
