@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:test_environtment/data/remote_data_sources/profile/profile_data_source.dart';
 import 'package:test_environtment/features/profile/widgets/profile_short_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../domain/models/user_preview.dart';
 import 'widgets/user_stories.dart';
 
 //Объявление виджета ProfileScreen, который является состоянием (stateful) и наследует от StatefulWidget
@@ -29,10 +32,11 @@ class _ProfileScreenState extends State<ProfileScreen>
     'История 9',
     'История 10'
   ];
-
+  late final ProfileDataSource profileDataSource;
   late TabController tabController;
-  late TextEditingController nameController;
-
+  TextEditingController nameController = TextEditingController();
+  String nikname = "...";
+  late UserPreview user;
   List<String> imageUrls = [];
   List<String> image = [];
 
@@ -48,7 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           automaticallyImplyLeading: false,
           backgroundColor: Colors.transparent,
           title: Text(
-            nameController.text,
+            nikname,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           actions: [
@@ -85,7 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 child: ProfileShortInfo(
                   image: image,
                   imageUrls: imageUrls,
-                  nameController: nameController,
+                  nikname: nikname,
                 ),
               ),
             ),
@@ -196,22 +200,27 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   void initState() {
     super.initState();
-    nameController = TextEditingController();
     tabController = TabController(length: 2, vsync: this);
-    loadUserName();
+    profileDataSource = context.read<ProfileDataSource>();
+    init();
     loadImages();
   }
 
-  //Метод _loadUserName, который асинхронно загружает имя пользователя из хранилища и обновляет состояние
-  void loadUserName() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? savedName = prefs.getString('userName');
-    setState(() {
-      nameController.text = savedName ?? 'Name';
-    });
+  Future<void> init() async {
+    final usersInfo = await profileDataSource.getProfiles();
+    user = usersInfo.data[10];
+    nikname = user.firstName;
+    // image = user.picture;
+    setState(() {});
   }
 
-  //Метод _loadImages, который асинхронно загружает URL изображений из хранилища и обновляет состояние
+  Future<void> update({required String name}) async {
+    final updatedUser = await profileDataSource.updateProfile(profileId: user.id, name: name);
+    nikname = updatedUser.firstName;
+    setState(() {});
+  }
+
+//  Метод _loadImages, который асинхронно загружает URL изображений из хранилища и обновляет состояние
   void loadImages() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -222,7 +231,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   //Метод _editProfile, который открывает диалоговое окно для редактирования профиля и обрабатывает новое имя
   void _editProfile() async {
-    final newName = await showDialog<String>(
+    showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -233,26 +242,17 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.pop(context, nameController.text),
-              child: const Text('Save'),
+              onPressed: ()
+              {
+                update(name: nameController.text);
+                Navigator.pop(context);
+              },
+              child: const Text('Сохранить'),
             ),
           ],
         );
       },
     );
-
-    if (newName != null && newName.isNotEmpty) {
-      _saveUserName(newName); // Сохраняем новое имя при сохранении
-    }
-  }
-
-  //Метод _saveUserName, который асинхронно сохраняет новое имя пользователя в хранилище
-  void _saveUserName(String newName) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('userName', newName);
-    setState(() {
-      nameController.text = newName;
-    });
   }
 
   //Метод _saveImages, который асинхронно сохраняет список URL изображений в хранилище

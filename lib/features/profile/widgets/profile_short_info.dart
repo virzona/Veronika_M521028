@@ -7,12 +7,12 @@ class ProfileShortInfo extends StatefulWidget {
     super.key,
     required this.image,
     required this.imageUrls,
-    required this.nameController,
+    required this.nikname,
   });
 
   final List<String> image;
   final List<String> imageUrls;
-  final TextEditingController nameController;
+  final String nikname;
 
   @override
   ProfileShortInfoState createState() => ProfileShortInfoState();

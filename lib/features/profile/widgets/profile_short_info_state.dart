@@ -90,7 +90,7 @@ class ProfileShortInfoState extends State<ProfileShortInfo> {
             Padding(
               padding: EdgeInsets.only(left: 12),
               child: Text(
-                widget.nameController.text,
+                widget.nikname,
                 style: TextStyle(
                     color: Colors.black,
                     fontSize: 17,
