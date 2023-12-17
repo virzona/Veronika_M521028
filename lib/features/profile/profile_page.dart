@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:test_environtment/features/profile/widgets/profile_short_info.dart';
-import 'package:test_environtment/features/profile/widgets/story_preview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-
 import 'widgets/user_stories.dart';
 
 //Объявление виджета ProfileScreen, который является состоянием (stateful) и наследует от StatefulWidget
@@ -17,7 +15,8 @@ class ProfileScreen extends StatefulWidget {
 //Определение приватного состояния для виджета ProfileScreen,
 // включая список историй (_stories), контроллер имени (_nameController) и
 // список URL изображений (_imageUrls)
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen>
+    with TickerProviderStateMixin {
   final List stories = [
     'История 1',
     'История 2',
@@ -30,7 +29,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     'История 9',
     'История 10'
   ];
+
+  late TabController tabController;
   late TextEditingController nameController;
+
   List<String> imageUrls = [];
   List<String> image = [];
 
@@ -59,7 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Icons.add_box_outlined,
                       size: 30,
                     ),
-                    onPressed: _addImage,
+                    onPressed: addImage,
                   ),
                 ),
                 Padding(
@@ -139,75 +141,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             SliverToBoxAdapter(
               child: TabBar(
-                tabs: <Widget>[
+                controller: tabController,
+                tabs: const [
                   Tab(icon: Icon(Icons.video_collection_outlined)),
                   Tab(icon: Icon(Icons.person_add_alt_outlined)),
                 ],
               ),
             ),
-            SliverToBoxAdapter(
-              child: GridView.count(
-                scrollDirection: Axis.vertical,
-                shrinkWrap: true,
-                primary: false,
-                padding: const EdgeInsets.all(4),
-                crossAxisSpacing: 2,
-                mainAxisSpacing: 2,
-                crossAxisCount: 3,
-                children: imageUrls.map((imageUrl) {
-                  return _buildImageContainer(imageUrl);
-                }).toList(),
+            SliverFillRemaining(
+              child: TabBarView(
+                controller: tabController,
+                children: [
+                  GridView.count(
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
+                    primary: false,
+                    padding: const EdgeInsets.all(4),
+                    crossAxisSpacing: 2,
+                    mainAxisSpacing: 2,
+                    crossAxisCount: 3,
+                    children: imageUrls.map((imageUrl) {
+                      return buildImageContainer(imageUrl);
+                    }).toList(),
+                  ),
+                  Center(
+                    child: Column(
+                      children: const [
+                        SizedBox(
+                          height: 50,
+                        ),
+                        Icon(
+                          Icons.person_add,
+                          color: Colors.black,
+                          size: 60,
+                        ),
+                        Text(
+                          "Фотографии и видео с Вами",
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            )
+            ),
           ],
         ),
-        // body: Column(
-        //   children: [
-
-        //
-        //     UserStories(stories: stories),
-        //     const TabBar(tabs: <Widget>[
-        //       Tab(icon: Icon(Icons.video_collection_outlined)),
-        //       Tab(icon: Icon(Icons.person_add_alt_outlined)),
-        //     ]),
-        //     Expanded(
-        //       child: TabBarView(
-        //         children: <Widget>[
-        //           GridView.count(
-        //             scrollDirection: Axis.vertical,
-        //             shrinkWrap: true,
-        //             primary: false,
-        //             padding: const EdgeInsets.all(4),
-        //             crossAxisSpacing: 2,
-        //             mainAxisSpacing: 2,
-        //             crossAxisCount: 3,
-        //             children: imageUrls.map((imageUrl) {
-        //               return _buildImageContainer(imageUrl);
-        //             }).toList(),
-        //           ),
-        //           Center(
-        //             child: Column(
-        //               children: const [
-        //                 SizedBox(
-        //                   height: 50,
-        //                 ),
-        //                 Icon(
-        //                   Icons.person_add,
-        //                   color: Colors.black,
-        //                   size: 60,
-        //                 ),
-        //                 Text(
-        //                   "Фотографии и видео с Вами",
-        //                   style: TextStyle(color: Colors.black),
-        //                 ),
-        //               ],
-        //             ),
-        //           ),
-        //         ],
-        //       ),
-        //     ),
-        //   ],
-        // ),
       ),
     );
   }
@@ -218,12 +197,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     nameController = TextEditingController();
-    _loadUserName();
-    _loadImages();
+    tabController = TabController(length: 2, vsync: this);
+    loadUserName();
+    loadImages();
   }
 
   //Метод _loadUserName, который асинхронно загружает имя пользователя из хранилища и обновляет состояние
-  void _loadUserName() async {
+  void loadUserName() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? savedName = prefs.getString('userName');
     setState(() {
@@ -232,7 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   //Метод _loadImages, который асинхронно загружает URL изображений из хранилища и обновляет состояние
-  void _loadImages() async {
+  void loadImages() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       imageUrls = prefs.getStringList('imageUrls') ?? [];
@@ -276,13 +256,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   //Метод _saveImages, который асинхронно сохраняет список URL изображений в хранилище
-  void _saveImages() async {
+  void saveImages() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setStringList('imageUrls', imageUrls);
   }
 
   //Метод _addImage, который открывает диалоговое окно для добавления изображения и обрабатывает добавленный URL
-  void _addImage() async {
+  void addImage() async {
     TextEditingController imageUrlController = TextEditingController();
     final picker = ImagePicker();
     final pickedFile = await picker.getImage(source: ImageSource.gallery);
@@ -290,7 +270,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (pickedFile != null) {
       setState(() {
         imageUrls.add(pickedFile.path);
-        _saveImages();
+        saveImages();
       });
     }
   }
@@ -298,15 +278,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _deleteImage(String imageUrl) {
     setState(() {
       imageUrls.remove(imageUrl);
-      _saveImages();
+      saveImages();
     });
   }
 
   //Метод _buildImageContainer, который возвращает виджет контейнера с изображением для отображения в сетке
-  Widget _buildImageContainer(String imageUrl) {
+  Widget buildImageContainer(String imageUrl) {
     return InkWell(
       onTap: () {
-        _showFullScreenImage(imageUrl);
+        showFullScreenImage(imageUrl);
       },
       child: Stack(
         alignment: Alignment.topRight,
@@ -330,7 +310,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   //Метод _showFullScreenImage, который открывает диалоговое окно с полноразмерным изображением.
-  void _showFullScreenImage(String imageUrl) {
+  void showFullScreenImage(String imageUrl) {
     showDialog(
       context: context,
       builder: (BuildContext context) {

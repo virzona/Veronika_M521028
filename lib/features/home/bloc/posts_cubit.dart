@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:test_environtment/data/remote_data_sources/post/post_data_source.dart';
 import 'package:test_environtment/domain/models/list_model.dart';
 import 'package:test_environtment/domain/models/post_preview.dart';
-import 'package:test_environtment/domain/models/post_preview.dart';
 
 sealed class PostsState {}
 
