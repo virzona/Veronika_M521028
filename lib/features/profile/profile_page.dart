@@ -7,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../domain/models/user_preview.dart';
 import 'widgets/user_stories.dart';
 
-//Объявление виджета ProfileScreen, который является состоянием (stateful) и наследует от StatefulWidget
 class ProfileScreen extends StatefulWidget {
   ProfileScreen({Key? key}) : super(key: key);
 
@@ -15,9 +14,6 @@ class ProfileScreen extends StatefulWidget {
   _ProfileScreenState createState() => _ProfileScreenState();
 }
 
-//Определение приватного состояния для виджета ProfileScreen,
-// включая список историй (_stories), контроллер имени (_nameController) и
-// список URL изображений (_imageUrls)
 class _ProfileScreenState extends State<ProfileScreen>
     with TickerProviderStateMixin {
   final List stories = [
@@ -38,10 +34,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   String nikname = "...";
   late UserPreview user;
   List<String> imageUrls = [];
-  List<String> image = [];
 
-//Переопределение метода build, который строит и отображает UI виджета
-// Создание виджета DefaultTabController, который предоставляет вкладки (Tabs) для отображения контента в разных разделах экрана
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -87,7 +81,6 @@ class _ProfileScreenState extends State<ProfileScreen>
               padding: EdgeInsets.symmetric(horizontal: 6.0),
               sliver: SliverToBoxAdapter(
                 child: ProfileShortInfo(
-                  image: image,
                   imageUrls: imageUrls,
                   nikname: nikname,
                 ),
@@ -195,8 +188,37 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  //Переопределение метода initState, который вызывается при создании объекта состояния
-  // В данном случае, инициализируются контроллер имени и загружаются данные из хранилища (например, SharedPreferences)
+  Widget buildImageContainer(String imageUrl) {
+    return InkWell(
+      onTap: () {
+        showFullScreenImage(imageUrl);
+      },
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              padding: const EdgeInsets.all(0),
+              child: Image(
+                image: NetworkImage(imageUrl),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () {
+                _deleteImage(imageUrl);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -210,7 +232,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     final usersInfo = await profileDataSource.getProfiles();
     user = usersInfo.data[10];
     nikname = user.firstName;
-    // image = user.picture;
     setState(() {});
   }
 
@@ -220,16 +241,13 @@ class _ProfileScreenState extends State<ProfileScreen>
     setState(() {});
   }
 
-//  Метод _loadImages, который асинхронно загружает URL изображений из хранилища и обновляет состояние
   void loadImages() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       imageUrls = prefs.getStringList('imageUrls') ?? [];
-      image = prefs.getStringList('image') ?? [];
     });
   }
 
-  //Метод _editProfile, который открывает диалоговое окно для редактирования профиля и обрабатывает новое имя
   void _editProfile() async {
     showDialog(
       context: context,
@@ -255,17 +273,15 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  //Метод _saveImages, который асинхронно сохраняет список URL изображений в хранилище
   void saveImages() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setStringList('imageUrls', imageUrls);
   }
 
-  //Метод _addImage, который открывает диалоговое окно для добавления изображения и обрабатывает добавленный URL
   void addImage() async {
     TextEditingController imageUrlController = TextEditingController();
     final picker = ImagePicker();
-    final pickedFile = await picker.getImage(source: ImageSource.gallery);
+    final pickedFile = await picker.getImage(source: ImageSource.gallery, imageQuality: 100);
 
     if (pickedFile != null) {
       setState(() {
@@ -282,34 +298,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     });
   }
 
-  //Метод _buildImageContainer, который возвращает виджет контейнера с изображением для отображения в сетке
-  Widget buildImageContainer(String imageUrl) {
-    return InkWell(
-      onTap: () {
-        showFullScreenImage(imageUrl);
-      },
-      child: Stack(
-        alignment: Alignment.topRight,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(0),
-            child: Image(
-              image: NetworkImage(imageUrl),
-              fit: BoxFit.cover,
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: () {
-              _deleteImage(imageUrl);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  //Метод _showFullScreenImage, который открывает диалоговое окно с полноразмерным изображением.
   void showFullScreenImage(String imageUrl) {
     showDialog(
       context: context,

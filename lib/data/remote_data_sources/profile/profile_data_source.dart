@@ -30,7 +30,22 @@ class ProfileDataSource {
       {required String profileId, required String name}) async {
     final result = await dio.put(
         '/user/$profileId',
-        data: {'firstName': name}
+        data: {
+          'firstName': name,
+        }
+    );
+
+    var userPreview = source_user_preview.UserPreview.fromJson(result.data).toEntity();
+    return userPreview;
+  }
+
+  Future<UserPreview> updateProfileUserPhoto(
+      {required String profileId, required String userPicture}) async {
+    final result = await dio.put(
+        '/user/$profileId',
+        data: {
+          'picture': userPicture
+        }
     );
 
     var userPreview = source_user_preview.UserPreview.fromJson(result.data).toEntity();

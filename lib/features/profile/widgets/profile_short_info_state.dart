@@ -1,133 +1,200 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:test_environtment/data/remote_data_sources/profile/profile_data_source.dart';
+import 'package:test_environtment/domain/models/user_preview.dart';
 import 'package:test_environtment/features/profile/widgets/profile_short_info.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
 
 
 class ProfileShortInfoState extends State<ProfileShortInfo> {
+
+  late final ProfileDataSource profileDataSource;
+  late UserPreview user;
+  final picker = ImagePicker();
+  String Photo = "...";
+
+  XFile? image;
+  XFile? get imageProfile => image;
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            GestureDetector(
-              onTap: _changeProfilePicture,
-              child: ClipOval(
-                child: widget.image.isNotEmpty
-                    ? Image.network(
-                  widget.image.first,
-                  height: 80,
-                  width: 80,
-                  fit: BoxFit.cover,
-                )
-                    : Icon(
-                  Icons.person,
-                  size: 80,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            Row(
+            return Column(
               children: [
-                Column(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      widget.imageUrls.length.toString(),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                        fontSize: 20,
+                    GestureDetector(
+                      onTap: (){
+                        pickImage(context);
+                        },
+                      child:
+                    //   Image.file(
+                    //       File(Photo).absolute
+                    //   )
+                    // ),
+                      Image.network(
+                            Photo,
+                          height: 80,
+                          width: 80,
+                          fit: BoxFit.cover,
+                        )
+                      ),
+                    Row(
+                      children: [
+                        Column(
+                          children: [
+                            Text(
+                              widget.imageUrls.length.toString(),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                fontSize: 20,
+                              ),
+                            ),
+                            Text(
+                              'Посты',
+                              style: TextStyle(color: Colors.black, fontSize: 15),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          '2357',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                              fontSize: 20),
+                        ),
+                        Text(
+                          'Подписчики',
+                          style: TextStyle(color: Colors.black, fontSize: 15),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(right: 26.0),
+                      child: Column(
+                        children: [
+                          Text(
+                            '56',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                fontSize: 20),
+                          ),
+                          Text(
+                            'Подписки',
+                            style: TextStyle(color: Colors.black, fontSize: 15),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      'Посты',
-                      style: TextStyle(color: Colors.black, fontSize: 15),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(left: 12),
+                      child: Text(
+                        widget.nikname,
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.only(left: 8),
+                      child: Text(
+                        '🌺🌺🌺🌺🌺',
+                        style: TextStyle(color: Colors.black),
+                      ),
                     ),
                   ],
                 ),
               ],
-            ),
-            Column(
-              children: [
-                Text(
-                  '2357',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      fontSize: 20),
-                ),
-                Text(
-                  'Подписчики',
-                  style: TextStyle(color: Colors.black, fontSize: 15),
-                ),
-              ],
-            ),
-            Padding(
-              padding: EdgeInsets.only(right: 26.0),
-              child: Column(
-                children: [
-                  Text(
-                    '56',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                        fontSize: 20),
-                  ),
-                  Text(
-                    'Подписки',
-                    style: TextStyle(color: Colors.black, fontSize: 15),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Padding(
-              padding: EdgeInsets.only(left: 12),
-              child: Text(
-                widget.nikname,
-                style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-        Row(
-          children: const [
-            Padding(
-              padding: EdgeInsets.only(left: 8),
-              child: Text(
-                '🌺🌺🌺🌺🌺',
-                style: TextStyle(color: Colors.black),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
+            );
   }
 
-  void _changeProfilePicture() async {
-    final picker1 = ImagePicker();
-    final pickedFile2 = await picker1.getImage(source: ImageSource.gallery);
+  @override
+  void initState() {
+    super.initState();
+    profileDataSource = context.read<ProfileDataSource>();
+    init();
+  }
 
-    if (pickedFile2 != null) {
-      setState(() {
-        widget.image.insert(0, pickedFile2.path);
-        _saveImages2();
-      });
+  Future<void> init() async {
+    final usersInfo = await profileDataSource.getProfiles();
+    user = usersInfo.data[10];
+    Photo = user.picture;
+    setState(() {});
+  }
+
+  Future<void> updateUserPhoto({required String photo}) async {
+    final updatedUser = await profileDataSource.updateProfileUserPhoto(profileId: user.id, userPicture: photo);
+    Photo = updatedUser.picture;
+    setState(() {});
+  }
+
+  Future pickGalleryImage(BuildContext context) async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 100);
+    if(pickedFile != null) {
+      image = XFile(pickedFile.path);
+      updateUserPhoto(photo: image!.path);
     }
   }
 
-  void _saveImages2() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList('image', widget.image);
+  Future pickCameraImage(BuildContext context) async {
+    final pickedFile = await picker.pickImage(source: ImageSource.camera, imageQuality: 100);
+    if(pickedFile != null) {
+      image = XFile(pickedFile.path);
+      updateUserPhoto(photo: image!.path);
+    }
   }
+
+  void pickImage(context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Container(
+            height: 100,
+            child: Column(
+              children: [
+                ListTile(
+                  onTap: (){
+                    pickCameraImage(context);
+                    Navigator.pop(context);
+                  },
+                  leading: Icon(Icons.camera, color: Colors.black,),
+                  title: Text('Камера'),
+                ),
+                ListTile(
+                  onTap: (){
+                    pickGalleryImage(context);
+                    Navigator.pop(context);
+                  },
+                  leading: Icon(Icons.image, color: Colors.black,),
+                  title: Text('Галерея'),
+
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 }
