@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:test_environtment/data/remote_data_sources/profile/profile_data_source.dart';
+import 'package:test_environtment/features/home/bloc/posts_cubit.dart';
 import 'package:test_environtment/features/profile/widgets/profile_short_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
@@ -30,6 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   ];
   late final ProfileDataSource profileDataSource;
   late TabController tabController;
+  late final PostsCubit postsCubit;
   TextEditingController nameController = TextEditingController();
   String nikname = "...";
   late UserPreview user;
@@ -54,13 +56,17 @@ class _ProfileScreenState extends State<ProfileScreen>
               children: [
                 Padding(
                   padding: EdgeInsets.all(8.0),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.add_box_outlined,
-                      size: 30,
-                    ),
-                    onPressed: addImage,
+                  child: Icon(
+                    Icons.add_box_outlined,
+                    size: 30,
                   ),
+                  // IconButton(
+                  //   icon: Icon(
+                  //     Icons.add_box_outlined,
+                  //     size: 30,
+                  //   ),
+                  //   onPressed: addImage,
+                  // ),
                 ),
                 Padding(
                   padding: EdgeInsets.all(8.0),
@@ -149,18 +155,43 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: TabBarView(
                 controller: tabController,
                 children: [
-                  GridView.count(
-                    scrollDirection: Axis.vertical,
-                    shrinkWrap: true,
-                    primary: false,
-                    padding: const EdgeInsets.all(4),
-                    crossAxisSpacing: 2,
-                    mainAxisSpacing: 2,
-                    crossAxisCount: 3,
-                    children: imageUrls.map((imageUrl) {
-                      return buildImageContainer(imageUrl);
-                    }).toList(),
-                  ),
+                  BlocBuilder<PostsCubit, PostsState>(
+                      bloc: postsCubit,
+                      builder: (context, state) {
+                        return switch (state) {
+                          PostsLoadedState() => GridView.builder(
+                              shrinkWrap: true,
+                              itemCount: state.postsInfo.data.length,
+                              gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 3,
+                                mainAxisSpacing: 3,
+                                childAspectRatio: 1,
+                              ),
+                              itemBuilder: (context, index) {
+                                return Image.network(
+                                  state.postsInfo.data[index].image,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  fit: BoxFit.cover,
+                                );
+                              }),
+                          _ => const Center(child: CircularProgressIndicator()),
+                        };
+                      }),
+                  // GridView.count(
+                  //   scrollDirection: Axis.vertical,
+                  //   shrinkWrap: true,
+                  //   primary: false,
+                  //   padding: const EdgeInsets.all(4),
+                  //   crossAxisSpacing: 2,
+                  //   mainAxisSpacing: 2,
+                  //   crossAxisCount: 3,
+                  //   children: imageUrls.map((imageUrl) {
+                  //     return buildImageContainer(imageUrl);
+                  //   }).toList(),
+                  // ),
                   Center(
                     child: Column(
                       children: const [
@@ -188,44 +219,14 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget buildImageContainer(String imageUrl) {
-    return InkWell(
-      onTap: () {
-        showFullScreenImage(imageUrl);
-      },
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              padding: const EdgeInsets.all(0),
-              child: Image(
-                image: NetworkImage(imageUrl),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () {
-                _deleteImage(imageUrl);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   void initState() {
     super.initState();
     tabController = TabController(length: 2, vsync: this);
+    postsCubit = PostsCubit(context.read())..initWithTag(tag: "person");
     profileDataSource = context.read<ProfileDataSource>();
     init();
-    loadImages();
+    // loadImages();
   }
 
   Future<void> init() async {
@@ -239,13 +240,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     final updatedUser = await profileDataSource.updateProfile(profileId: user.id, name: name);
     nikname = updatedUser.firstName;
     setState(() {});
-  }
-
-  void loadImages() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      imageUrls = prefs.getStringList('imageUrls') ?? [];
-    });
   }
 
   void _editProfile() async {
@@ -273,31 +267,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  void saveImages() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList('imageUrls', imageUrls);
-  }
-
-  void addImage() async {
-    TextEditingController imageUrlController = TextEditingController();
-    final picker = ImagePicker();
-    final pickedFile = await picker.getImage(source: ImageSource.gallery, imageQuality: 100);
-
-    if (pickedFile != null) {
-      setState(() {
-        imageUrls.add(pickedFile.path);
-        saveImages();
-      });
-    }
-  }
-
-  void _deleteImage(String imageUrl) {
-    setState(() {
-      imageUrls.remove(imageUrl);
-      saveImages();
-    });
-  }
-
   void showFullScreenImage(String imageUrl) {
     showDialog(
       context: context,
@@ -318,4 +287,67 @@ class _ProfileScreenState extends State<ProfileScreen>
       },
     );
   }
+
+  // Widget buildImageContainer(String imageUrl) {
+  //   return InkWell(
+  //     onTap: () {
+  //       showFullScreenImage(imageUrl);
+  //     },
+  //     child: Stack(
+  //       children: [
+  //         Positioned.fill(
+  //           child: Container(
+  //             padding: const EdgeInsets.all(0),
+  //             child: Image(
+  //               image: NetworkImage(imageUrl),
+  //               fit: BoxFit.cover,
+  //             ),
+  //           ),
+  //         ),
+  //         Positioned(
+  //           top: 0,
+  //           right: 0,
+  //           child: IconButton(
+  //             icon: Icon(Icons.delete),
+  //             onPressed: () {
+  //               _deleteImage(imageUrl);
+  //             },
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // void loadImages() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   setState(() {
+  //     imageUrls = prefs.getStringList('imageUrls') ?? [];
+  //   });
+  // }
+
+  // void saveImages() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   prefs.setStringList('imageUrls', imageUrls);
+  // }
+
+  // void addImage() async {
+  //   TextEditingController imageUrlController = TextEditingController();
+  //   final picker = ImagePicker();
+  //   final pickedFile = await picker.getImage(source: ImageSource.gallery, imageQuality: 100);
+  //
+  //   if (pickedFile != null) {
+  //     setState(() {
+  //       imageUrls.add(pickedFile.path);
+  //       saveImages();
+  //     });
+  //   }
+  // }
+
+  // void _deleteImage(String imageUrl) {
+  //   setState(() {
+  //     imageUrls.remove(imageUrl);
+  //     saveImages();
+  //   });
+  // }
 }

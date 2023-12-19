@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:test_environtment/core/di/app_services.dart';
 import 'package:test_environtment/data/remote_data_sources/post/post_data_source.dart';
 import 'package:test_environtment/data/remote_data_sources/profile/profile_data_source.dart';
-import 'dart:js_util';
 
 class AppDataSourcesProvider extends StatefulWidget {
   final Widget child;
